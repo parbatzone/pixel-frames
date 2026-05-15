@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel Production — Frame Stock</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: #2a2a35;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #f0f0f5;
+    --muted: #6b6b7d;
+    --danger: #ff4757;
+    --success: #2ed573;
+    --radius: 10px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 2rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-mark {
+    width: 34px; height: 34px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-mark svg { width: 18px; height: 18px; }
+  .logo-text { font-size: 1rem; font-weight: 800; letter-spacing: -.02em; }
+  .logo-sub { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--muted); letter-spacing: .08em; }
+  .header-actions { display: flex; gap: 10px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all .15s;
+    letter-spacing: .04em;
+  }
+  .btn-ghost { background: transparent; color: var(--muted); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-accent { background: var(--accent); color: #0d0d0f; border-color: var(--accent); font-weight: 500; }
+  .btn-accent:hover { background: #d4eb3a; }
+  .btn-danger { background: transparent; color: var(--danger); border-color: var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: white; }
+  .btn-sm { padding: 5px 11px; font-size: 0.7rem; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── MAIN LAYOUT ── */
+  .main { display: grid; grid-template-columns: 320px 1fr; min-height: calc(100vh - 61px); }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow-y: auto;
+  }
+  .sidebar-section-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: .1em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: .75rem;
+  }
+  .config-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+  label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 5px;
+    letter-spacing: .04em;
+  }
+  input[type=text], input[type=number], select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  .field-group { margin-bottom: 1rem; }
+  .field-group:last-child { margin-bottom: 0; }
+
+  .connect-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    margin-top: .75rem;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+  .dot.connected { background: var(--success); box-shadow: 0 0 6px var(--success); }
+  .dot.error { background: var(--danger); }
+  .dot.loading { background: var(--accent); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* ── STATS ── */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .75rem;
+  }
+  .stat-val { font-size: 1.4rem; font-weight: 800; }
+  .stat-lbl { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+  .stat-val.warn { color: var(--accent2); }
+
+  /* ── CONTENT AREA ── */
+  .content { padding: 2rem; overflow-y: auto; }
+  .content-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+  .content-title { font-size: 1.3rem; font-weight: 800; }
+  .toolbar { display: flex; gap: 8px; }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--surface2); }
+  th {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 11px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 11px 14px;
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tbody tr { transition: background .1s; }
+  tbody tr:hover { background: var(--surface2); }
+
+  .sku-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 7px;
+    color: var(--accent);
+  }
+  .price-val {
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+  }
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .badge-ok { background: rgba(46,213,115,.15); color: var(--success); }
+  .badge-low { background: rgba(255,107,53,.15); color: var(--accent2); }
+  .badge-zero { background: rgba(255,71,87,.15); color: var(--danger); }
+
+  /* Qty editor inline */
+  .qty-editor {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .qty-btn {
+    width: 26px; height: 26px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .1s;
+  }
+  .qty-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .qty-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 500;
+    min-width: 30px;
+    text-align: center;
+  }
+
+  .row-actions { display: flex; gap: 6px; }
+
+  /* ── LABEL PREVIEW PANEL ── */
+  .label-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-top: 1.5rem;
+    overflow: hidden;
+  }
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .panel-title { font-size: .9rem; font-weight: 700; }
+  .panel-sub { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); }
+  .label-grid-preview {
+    padding: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+
+  /* Mini label card */
+  .mini-label {
+    background: white;
+    border-radius: 6px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid #e0e0e0;
+    aspect-ratio: 1 / 1.1;
+  }
+  .mini-label .ml-qr { width: 52px; height: 52px; }
+  .mini-label .ml-qr canvas, .mini-label .ml-qr img { width: 52px !important; height: 52px !important; }
+  .mini-label .ml-sku { font-family: 'DM Mono', monospace; font-size: 7px; color: #555; }
+  .mini-label .ml-price { font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 700; color: #111; }
+  .mini-label .ml-name { font-size: 7px; color: #333; text-align: center; line-height: 1.2; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+  }
+  .empty-state svg { opacity: .3; margin-bottom: 1rem; }
+  .empty-state p { font-size: .9rem; }
+
+  /* ── TOAST ── */
+  .toast-wrap {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 999;
+  }
+  .toast {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    animation: slideIn .2s ease;
+    box-shadow: 0 4px 24px rgba(0,0,0,.4);
+  }
+  .toast.success { border-color: var(--success); color: var(--success); }
+  .toast.error { border-color: var(--danger); color: var(--danger); }
+  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* ── PRINT STYLES ── */
+  @media print {
+    body * { visibility: hidden !important; }
+    #print-area, #print-area * { visibility: visible !important; }
+    #print-area {
+      position: fixed !important;
+      top: 0; left: 0;
+      width: 210mm;
+      background: white;
+    }
+  }
+  #print-area { display: none; }
+
+  .a4-page {
+    width: 210mm;
+    height: 297mm;
+    background: white;
+    padding: 8mm;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: 4mm;
+    page-break-after: always;
+  }
+  .print-label {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px;
+    font-family: 'DM Mono', monospace;
+    overflow: hidden;
+  }
+  .print-label .pl-studio {
+    font-size: 6pt;
+    color: #999;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .print-label .pl-name {
+    font-size: 7.5pt;
+    font-weight: 600;
+    color: #111;
+    text-align: center;
+    line-height: 1.2;
+    font-family: 'Syne', sans-serif;
+  }
+  .print-label .pl-qr { width: 55mm; height: 55mm; }
+  .print-label .pl-qr canvas, .print-label .pl-qr img { width: 55mm !important; height: 55mm !important; }
+  .print-label .pl-sku { font-size: 6.5pt; color: #555; }
+  .print-label .pl-price { font-size: 10pt; font-weight: 700; color: #111; }
+  .print-label .pl-divider { width: 80%; border: none; border-top: .5px solid #ddd; }
+
+  /* ── MODAL ── */
+  .modal-bg {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.7);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s;
+  }
+  .modal-bg.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2rem;
+    width: 420px;
+    max-width: 95vw;
+  }
+  .modal h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 1.25rem; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem; }
+
+  /* loading overlay */
+  .loading-row td {
+    text-align: center;
+    padding: 3rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: .8rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 18 18" fill="none">
+        <rect x="1" y="1" width="7" height="7" rx="1.5" fill="#0d0d0f"/>
+        <rect x="10" y="1" width="7" height="7" rx="1.5" fill="#0d0d0f"/>
+        <rect x="1" y="10" width="7" height="7" rx="1.5" fill="#0d0d0f"/>
+        <rect x="10" y="10" width="7" height="7" rx="1.5" fill="#0d0d0f" opacity=".4"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-text">Pixel Production</div>
+      <div class="logo-sub">Frame Stock Manager</div>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-ghost" onclick="openAddModal()">+ Add Frame</button>
+    <button class="btn btn-accent" onclick="generatePrint()">🖨 Print Labels (15/A4)</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div>
+      <div class="sidebar-section-title">Google Sheets Config</div>
+      <div class="config-box">
+        <div class="field-group">
+          <label>Sheet ID</label>
+          <input type="text" id="sheet-id" placeholder="Paste your Sheet ID here" oninput="saveConfig()"/>
+        </div>
+        <div class="field-group">
+          <label>Sheet Name / Tab</label>
+          <input type="text" id="sheet-name" placeholder="Frame Stock" value="Frame Stock" oninput="saveConfig()"/>
+        </div>
+        <button class="btn btn-accent" style="width:100%;margin-top:.25rem" onclick="loadSheet()">Connect & Load</button>
+        <div class="connect-status">
+          <div class="dot" id="status-dot"></div>
+          <span id="status-text" style="color:var(--muted)">Not connected</span>
+        </div>
+      </div>
+      <div style="margin-top:.75rem;font-family:'DM Mono',monospace;font-size:.68rem;color:var(--muted);line-height:1.7">
+        ① Make sure your sheet is set to <strong style="color:var(--text)">Anyone with link can view</strong><br>
+        ② Copy the ID from the URL:<br>
+        <span style="color:var(--accent)">…/spreadsheets/d/<u>THIS_PART</u>/edit</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="sidebar-section-title">Stock Summary</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-val" id="stat-total">—</div>
+          <div class="stat-lbl">Total Units</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-types">—</div>
+          <div class="stat-lbl">Frame Types</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val warn" id="stat-low">—</div>
+          <div class="stat-lbl">Low Stock</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-value">—</div>
+          <div class="stat-lbl">Total Value</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sidebar-section-title">Label Selection</div>
+      <div class="config-box" style="font-family:'DM Mono',monospace;font-size:.75rem;line-height:1.8;color:var(--muted)">
+        Select frames from the table using the <span style="color:var(--accent)">☑ Label</span> button, then hit Print.<br><br>
+        <span id="selected-count" style="color:var(--text);font-weight:500">0 frames selected</span> for printing.
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px;width:100%" onclick="clearSelection()">Clear selection</button>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="content-header">
+      <div>
+        <div class="content-title">Frame Inventory</div>
+        <div style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);margin-top:3px">Connect your sheet to load frames</div>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-ghost btn-sm" onclick="loadSheet()" title="Refresh">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>Frame Name</th>
+            <th>Size</th>
+            <th>Price (NPR)</th>
+            <th>Stock Qty</th>
+            <th>Status</th>
+            <th>Adjust Qty</th>
+            <th>Label</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr class="loading-row">
+            <td colspan="8">
+              <div class="empty-state">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                <p>Paste your Google Sheet ID and hit Connect</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- LABEL PREVIEW -->
+    <div class="label-panel" id="label-panel" style="display:none">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Label Preview</div>
+          <div class="panel-sub" id="preview-sub">15 per A4 sheet · QR · SKU · Price</div>
+        </div>
+        <button class="btn btn-accent btn-sm" onclick="generatePrint()">Print Now</button>
+      </div>
+      <div class="label-grid-preview" id="label-grid-preview"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD FRAME MODAL -->
+<div class="modal-bg" id="add-modal">
+  <div class="modal">
+    <h2>Add New Frame</h2>
+    <div class="field-group">
+      <label>SKU</label>
+      <input type="text" id="new-sku" placeholder="PP-1007"/>
+    </div>
+    <div class="field-group">
+      <label>Frame Name</label>
+      <input type="text" id="new-name" placeholder="Classic Black Frame"/>
+    </div>
+    <div class="field-group">
+      <label>Frame Size</label>
+      <input type="text" id="new-size" placeholder="4x6"/>
+    </div>
+    <div class="field-group">
+      <label>Price (NPR)</label>
+      <input type="number" id="new-price" placeholder="850"/>
+    </div>
+    <div class="field-group">
+      <label>Stock Quantity</label>
+      <input type="number" id="new-qty" placeholder="10"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-accent" onclick="addFrameLocal()">Add Frame</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- PRINT AREA -->
+<div id="print-area"></div>
+
+<script>
+let frames = [];
+let selectedForPrint = new Set();
+let pendingQtyChanges = {};
+
+// ── CONFIG PERSISTENCE ──────────────────────────────────────
+function saveConfig() {
+  localStorage.setItem('pp_sheet_id', document.getElementById('sheet-id').value);
+  localStorage.setItem('pp_sheet_name', document.getElementById('sheet-name').value);
+}
+function loadConfig() {
+  const id = localStorage.getItem('pp_sheet_id') || '';
+  const name = localStorage.getItem('pp_sheet_name') || 'Frame Stock';
+  document.getElementById('sheet-id').value = id;
+  document.getElementById('sheet-name').value = name;
+}
+
+// ── GOOGLE SHEETS LOADER ────────────────────────────────────
+async function loadSheet() {
+  const sheetId = document.getElementById('sheet-id').value.trim();
+  const sheetName = document.getElementById('sheet-name').value.trim() || 'Frame Stock';
+  if (!sheetId) { toast('Paste your Sheet ID first', 'error'); return; }
+
+  setStatus('loading', 'Connecting…');
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Network error');
+    const text = await res.text();
+    const json = JSON.parse(text.substring(47, text.length - 2));
+    const rows = json.table.rows;
+
+    frames = rows
+      .filter(r => r.c[0] && r.c[0].v)
+      .map(r => ({
+        sku:   r.c[0]?.v ?? '',
+        name:  r.c[1]?.v ?? '',
+        size:  r.c[2]?.v ?? '',
+        price: Number(r.c[3]?.v ?? 0),
+        qty:   Number(r.c[4]?.v ?? 0),
+      }));
+
+    renderTable();
+    updateStats();
+    setStatus('connected', `Connected · ${frames.length} frames loaded`);
+    toast(`${frames.length} frames loaded`, 'success');
+    saveConfig();
+  } catch(e) {
+    setStatus('error', 'Connection failed — check Sheet ID & sharing');
+    toast('Could not load sheet. Make sure it\'s shared (Anyone with link)', 'error');
+  }
+}
+
+// ── STATUS DOT ──────────────────────────────────────────────
+function setStatus(state, msg) {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  dot.className = 'dot ' + state;
+  txt.textContent = msg;
+  txt.style.color = state === 'connected' ? 'var(--success)' : state === 'error' ? 'var(--danger)' : 'var(--accent)';
+}
+
+// ── RENDER TABLE ────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('table-body');
+  if (!frames.length) {
+    tbody.innerHTML = `<tr class="loading-row"><td colspan="8"><div class="empty-state"><p>No frames found in sheet</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = frames.map((f, i) => {
+    const qty = pendingQtyChanges[f.sku] !== undefined ? pendingQtyChanges[f.sku] : f.qty;
+    const badge = qty === 0
+      ? `<span class="badge badge-zero">Out of Stock</span>`
+      : qty < 5
+        ? `<span class="badge badge-low">⚠ Low (${qty})</span>`
+        : `<span class="badge badge-ok">✓ OK</span>`;
+    const sel = selectedForPrint.has(f.sku);
+    return `
+      <tr id="row-${i}">
+        <td><span class="sku-tag">${f.sku}</span></td>
+        <td>${f.name}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:.8rem">${f.size}</td>
+        <td><span class="price-val">NPR ${f.price.toLocaleString()}</span></td>
+        <td><span class="price-val" id="qty-display-${i}">${qty}</span></td>
+        <td id="badge-${i}">${badge}</td>
+        <td>
+          <div class="qty-editor">
+            <button class="qty-btn" onclick="adjustQty(${i}, -1)">−</button>
+            <span class="qty-num" id="qty-num-${i}">${qty}</span>
+            <button class="qty-btn" onclick="adjustQty(${i}, 1)">+</button>
+            <button class="btn btn-ghost btn-sm" onclick="saveQty(${i})" id="save-btn-${i}" style="display:none">Save</button>
+          </div>
+        </td>
+        <td>
+          <button class="btn btn-sm ${sel ? 'btn-accent' : 'btn-ghost'}" id="label-btn-${i}" onclick="toggleLabel(${i})">
+            ${sel ? '☑ Selected' : '☐ Label'}
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ── QTY ADJUSTMENT ─────────────────────────────────────────
+function adjustQty(i, delta) {
+  const f = frames[i];
+  const current = pendingQtyChanges[f.sku] !== undefined ? pendingQtyChanges[f.sku] : f.qty;
+  const newQty = Math.max(0, current + delta);
+  pendingQtyChanges[f.sku] = newQty;
+
+  document.getElementById(`qty-num-${i}`).textContent = newQty;
+  document.getElementById(`save-btn-${i}`).style.display = 'inline-block';
+
+  const badge = newQty === 0
+    ? `<span class="badge badge-zero">Out of Stock</span>`
+    : newQty < 5
+      ? `<span class="badge badge-low">⚠ Low (${newQty})</span>`
+      : `<span class="badge badge-ok">✓ OK</span>`;
+  document.getElementById(`badge-${i}`).innerHTML = badge;
+  updateStats();
+}
+
+function saveQty(i) {
+  const f = frames[i];
+  const newQty = pendingQtyChanges[f.sku];
+  frames[i].qty = newQty;
+  delete pendingQtyChanges[f.sku];
+  document.getElementById(`save-btn-${i}`).style.display = 'none';
+  toast(`Qty updated for ${f.name}. Remember to update your Google Sheet too!`, 'success');
+  updateStats();
+}
+
+// ── STATS ───────────────────────────────────────────────────
+function updateStats() {
+  const qtys = frames.map(f => pendingQtyChanges[f.sku] !== undefined ? pendingQtyChanges[f.sku] : f.qty);
+  document.getElementById('stat-total').textContent = qtys.reduce((a,b) => a+b, 0).toLocaleString();
+  document.getElementById('stat-types').textContent = frames.length;
+  document.getElementById('stat-low').textContent = qtys.filter(q => q < 5).length;
+  const val = frames.reduce((a, f, i) => a + f.price * qtys[i], 0);
+  document.getElementById('stat-value').textContent = val >= 1000 ? (val/1000).toFixed(1)+'K' : val;
+}
+
+// ── LABEL SELECTION ─────────────────────────────────────────
+function toggleLabel(i) {
+  const f = frames[i];
+  const btn = document.getElementById(`label-btn-${i}`);
+  if (selectedForPrint.has(f.sku)) {
+    selectedForPrint.delete(f.sku);
+    btn.className = 'btn btn-ghost btn-sm';
+    btn.textContent = '☐ Label';
+  } else {
+    selectedForPrint.add(f.sku);
+    btn.className = 'btn btn-accent btn-sm';
+    btn.textContent = '☑ Selected';
+  }
+  document.getElementById('selected-count').textContent = `${selectedForPrint.size} frame${selectedForPrint.size !== 1 ? 's' : ''} selected`;
+  updateLabelPreview();
+}
+
+function clearSelection() {
+  selectedForPrint.clear();
+  renderTable();
+  document.getElementById('selected-count').textContent = '0 frames selected';
+  document.getElementById('label-panel').style.display = 'none';
+}
+
+// ── LABEL PREVIEW ───────────────────────────────────────────
+function updateLabelPreview() {
+  const panel = document.getElementById('label-panel');
+  const grid = document.getElementById('label-grid-preview');
+  if (selectedForPrint.size === 0) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+
+  const selected = frames.filter(f => selectedForPrint.has(f.sku));
+  document.getElementById('preview-sub').textContent = `${selected.length} frame type${selected.length !== 1 ? 's' : ''} · 15 per A4 · QR · SKU · Price`;
+  grid.innerHTML = '';
+
+  selected.forEach(f => {
+    const card = document.createElement('div');
+    card.className = 'mini-label';
+    const qrDiv = document.createElement('div');
+    qrDiv.className = 'ml-qr';
+    card.appendChild(qrDiv);
+    const nameEl = document.createElement('div');
+    nameEl.className = 'ml-name';
+    nameEl.textContent = f.name;
+    const skuEl = document.createElement('div');
+    skuEl.className = 'ml-sku';
+    skuEl.textContent = f.sku;
+    const priceEl = document.createElement('div');
+    priceEl.className = 'ml-price';
+    priceEl.textContent = `NPR ${f.price.toLocaleString()}`;
+    card.appendChild(nameEl);
+    card.appendChild(skuEl);
+    card.appendChild(priceEl);
+    grid.appendChild(card);
+
+    new QRCode(qrDiv, {
+      text: `PP|${f.sku}|${f.name}|NPR${f.price}`,
+      width: 52, height: 52,
+      colorDark: '#111111', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  });
+}
+
+// ── PRINT ───────────────────────────────────────────────────
+async function generatePrint() {
+  const toprint = selectedForPrint.size > 0
+    ? frames.filter(f => selectedForPrint.has(f.sku))
+    : frames;
+
+  if (!toprint.length) { toast('No frames to print. Load your sheet first.', 'error'); return; }
+
+  const printArea = document.getElementById('print-area');
+  printArea.innerHTML = '';
+  printArea.style.display = 'block';
+
+  // Build pages (15 per page = 3×5)
+  const labels = [];
+  toprint.forEach(f => { for (let i = 0; i < 1; i++) labels.push(f); });
+  // fill to multiple of 15
+  while (labels.length % 15 !== 0) labels.push(null);
+
+  for (let p = 0; p < labels.length; p += 15) {
+    const page = document.createElement('div');
+    page.className = 'a4-page';
+    const slice = labels.slice(p, p + 15);
+
+    for (const f of slice) {
+      const lbl = document.createElement('div');
+      lbl.className = 'print-label';
+      if (!f) { lbl.style.border = '1px dashed #eee'; page.appendChild(lbl); continue; }
+
+      lbl.innerHTML = `
+        <div class="pl-studio">Pixel Production</div>
+        <div class="pl-name">${f.name}</div>
+        <hr class="pl-divider">
+      `;
+      const qrWrap = document.createElement('div');
+      qrWrap.className = 'pl-qr';
+      lbl.appendChild(qrWrap);
+
+      const footer = document.createElement('div');
+      footer.innerHTML = `
+        <hr class="pl-divider" style="width:80%;margin:.5mm auto">
+        <div class="pl-sku">${f.sku}${f.size ? ' · ' + f.size : ''}</div>
+        <div class="pl-price">NPR ${f.price.toLocaleString()}</div>
+      `;
+      lbl.appendChild(footer);
+      page.appendChild(lbl);
+
+      new QRCode(qrWrap, {
+        text: `PP|${f.sku}|${f.name}|NPR${f.price}`,
+        width: 140, height: 140,
+        colorDark: '#111111', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+    printArea.appendChild(page);
+  }
+
+  await new Promise(r => setTimeout(r, 600));
+  window.print();
+  setTimeout(() => { printArea.style.display = 'none'; }, 1000);
+}
+
+// ── ADD FRAME (LOCAL) ───────────────────────────────────────
+function openAddModal() { document.getElementById('add-modal').classList.add('open'); }
+function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
+
+function addFrameLocal() {
+  const sku   = document.getElementById('new-sku').value.trim();
+  const name  = document.getElementById('new-name').value.trim();
+  const size  = document.getElementById('new-size').value.trim();
+  const price = Number(document.getElementById('new-price').value);
+  const qty   = Number(document.getElementById('new-qty').value);
+
+  if (!sku || !name) { toast('SKU and Frame Name are required', 'error'); return; }
+  if (frames.find(f => f.sku === sku)) { toast('SKU already exists', 'error'); return; }
+
+  frames.push({ sku, name, size, price, qty });
+  renderTable();
+  updateStats();
+  closeAddModal();
+  toast(`${name} added locally. Remember to also add it to your Google Sheet!`, 'success');
+  ['new-sku','new-name','new-size','new-price','new-qty'].forEach(id => document.getElementById(id).value = '');
+}
+
+// ── TOAST ───────────────────────────────────────────────────
+function toast(msg, type = '') {
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── INIT ────────────────────────────────────────────────────
+loadConfig();
+// Pre-fill Pixel Production sheet
+if (!document.getElementById('sheet-id').value) {
+  document.getElementById('sheet-id').value = '1QEwk3_LgBvFq151TzC_mjBTEKPL73F7nbenMfhiF8Vw';
+  saveConfig();
+}
+loadSheet();
+document.getElementById('add-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('add-modal')) closeAddModal();
+});
+</script>
+</body>
+</html>
