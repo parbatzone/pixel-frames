@@ -344,44 +344,70 @@
     width: 210mm;
     height: 297mm;
     background: white;
-    padding: 8mm;
+    padding: 5mm;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(5, 1fr);
-    gap: 4mm;
+    gap: 3mm;
     page-break-after: always;
   }
   .print-label {
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    border: 1px solid #bbb;
+    border-radius: 5px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
-    padding: 6px;
-    font-family: 'DM Mono', monospace;
+    justify-content: space-evenly;
+    padding: 2mm 2mm;
+    font-family: Arial, sans-serif;
     overflow: hidden;
+    background: white;
   }
   .print-label .pl-studio {
-    font-size: 6pt;
-    color: #999;
-    letter-spacing: .08em;
+    font-size: 5pt;
+    color: #bbb;
+    letter-spacing: .1em;
     text-transform: uppercase;
+    text-align: center;
+  }
+  .print-label .pl-qr {
+    width: 20mm;
+    height: 20mm;
+    flex-shrink: 0;
+  }
+  .print-label .pl-qr canvas,
+  .print-label .pl-qr img {
+    width: 20mm !important;
+    height: 20mm !important;
+    display: block;
   }
   .print-label .pl-name {
-    font-size: 7.5pt;
-    font-weight: 600;
+    font-size: 7pt;
+    font-weight: 700;
     color: #111;
     text-align: center;
-    line-height: 1.2;
-    font-family: 'Syne', sans-serif;
+    line-height: 1.3;
+    word-break: break-word;
+    max-width: 100%;
   }
-  .print-label .pl-qr { width: 55mm; height: 55mm; }
-  .print-label .pl-qr canvas, .print-label .pl-qr img { width: 55mm !important; height: 55mm !important; }
-  .print-label .pl-sku { font-size: 6.5pt; color: #555; }
-  .print-label .pl-price { font-size: 10pt; font-weight: 700; color: #111; }
-  .print-label .pl-divider { width: 80%; border: none; border-top: .5px solid #ddd; }
+  .print-label .pl-sku {
+    font-size: 5.5pt;
+    color: #777;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+  }
+  .print-label .pl-price {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #000;
+    text-align: center;
+  }
+  .print-label .pl-divider {
+    width: 80%;
+    border: none;
+    border-top: .4px solid #ddd;
+    margin: 0;
+  }
 
   /* ── MODAL ── */
   .modal-bg {
@@ -827,29 +853,27 @@ async function generatePrint() {
       lbl.className = 'print-label';
       if (!f) { lbl.style.border = '1px dashed #eee'; page.appendChild(lbl); continue; }
 
-      lbl.innerHTML = `
-        <div class="pl-studio">Pixel Production</div>
-        <div class="pl-name">${f.name}</div>
-        <hr class="pl-divider">
-      `;
       const qrWrap = document.createElement('div');
       qrWrap.className = 'pl-qr';
-      lbl.appendChild(qrWrap);
 
-      const footer = document.createElement('div');
-      footer.innerHTML = `
-        <hr class="pl-divider" style="width:80%;margin:.5mm auto">
+      lbl.innerHTML = `<div class="pl-studio">Pixel Production</div>`;
+      lbl.appendChild(qrWrap);
+      const info = document.createElement('div');
+      info.style.cssText = 'width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1.5px';
+      info.innerHTML = `
+        <hr class="pl-divider">
+        <div class="pl-name">${f.name}</div>
         <div class="pl-sku">${f.sku}${f.size ? ' · ' + f.size : ''}</div>
         <div class="pl-price">NPR ${f.price.toLocaleString()}</div>
       `;
-      lbl.appendChild(footer);
+      lbl.appendChild(info);
       page.appendChild(lbl);
 
       new QRCode(qrWrap, {
-        text: `PP|${f.sku}|${f.name}|NPR${f.price}`,
-        width: 140, height: 140,
-        colorDark: '#111111', colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
+        text: `${f.sku}|${f.name}|NPR${f.price}`,
+        width: 80, height: 80,
+        colorDark: '#000000', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.L
       });
     }
     printArea.appendChild(page);
