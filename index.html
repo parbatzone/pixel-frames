@@ -839,7 +839,10 @@ async function generatePrint() {
 
   // Build pages (15 per page = 3×5)
   const labels = [];
-  toprint.forEach(f => { for (let i = 0; i < 1; i++) labels.push(f); });
+  toprint.forEach(f => { 
+    const qty = pendingQtyChanges[f.sku] !== undefined ? pendingQtyChanges[f.sku] : f.qty;
+    for (let i = 0; i < qty; i++) labels.push(f); 
+  });
   // fill to multiple of 15
   while (labels.length % 15 !== 0) labels.push(null);
 
